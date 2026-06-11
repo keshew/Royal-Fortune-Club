@@ -1,14 +1,40 @@
+import AdjustSdk
+import AppTrackingTransparency
 import FirebaseCore
 import FirebaseMessaging
 import Foundation
 import UIKit
 import UserNotifications
 
+private let adjustAppToken = "a0kdqyqbbda8"
+private let adjustEnvironment = ADJEnvironmentProduction
+
+final class AdjustAttributionHandler: NSObject, AdjustDelegate {
+    func adjustAttributionChanged(_ attribution: ADJAttribution?) {
+        guard let attribution else { return }
+
+        if #available(iOS 14, *),
+           ATTrackingManager.trackingAuthorizationStatus == .notDetermined {
+            return
+        }
+
+        guard let jsonResponse = attribution.jsonResponse,
+              let data = try? JSONSerialization.data(withJSONObject: jsonResponse, options: []),
+              let jsonString = String(data: data, encoding: .utf8) else {
+            UserDefaults.standard.removeObject(forKey: "lastAdjustAttribution")
+            return
+        }
+
+        UserDefaults.standard.set(jsonString, forKey: "lastAdjustAttribution")
+    }
+}
+
 final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
     static var orientationLock = UIInterfaceOrientationMask.allButUpsideDown
     private static let pushDedupQueue = DispatchQueue(label: "velvet-fortune-arcade.push.dedup")
     private static var lastPushDispatchSignature: String = ""
     private static var lastPushDispatchAt: Date = .distantPast
+    private let adjustAttributionHandler = AdjustAttributionHandler()
 
     func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
         AppDelegate.orientationLock
@@ -24,6 +50,10 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
 
         Messaging.messaging().delegate = self
         Messaging.messaging().isAutoInitEnabled = true
+
+        let adjustConfig = ADJConfig(appToken: adjustAppToken, environment: adjustEnvironment)
+        adjustConfig?.delegate = adjustAttributionHandler
+        Adjust.initSdk(adjustConfig)
         Messaging.messaging().token { token, error in
             if let error {
                 print("=== FCM_TOKEN_FETCH_ERROR === \(error.localizedDescription)")

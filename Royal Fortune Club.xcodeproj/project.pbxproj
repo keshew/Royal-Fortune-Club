@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		86614B132FC9CE9700DF5A97 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 86614B122FC9CE9700DF5A97 /* FirebaseCore */; };
 		86614B152FC9CE9700DF5A97 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = 86614B142FC9CE9700DF5A97 /* FirebaseMessaging */; };
+		86AD17C7B1A0000000000001 /* AdjustSdk in Frameworks */ = {isa = PBXBuildFile; productRef = 86AD17C7B1A0000000000003 /* AdjustSdk */; };
+		86AD17C7B1A0000000000002 /* AdjustWebBridge in Frameworks */ = {isa = PBXBuildFile; productRef = 86AD17C7B1A0000000000004 /* AdjustWebBridge */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -28,6 +30,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				86AD17C7B1A0000000000001 /* AdjustSdk in Frameworks */,
+				86AD17C7B1A0000000000002 /* AdjustWebBridge in Frameworks */,
 				86614B152FC9CE9700DF5A97 /* FirebaseMessaging in Frameworks */,
 				86614B132FC9CE9700DF5A97 /* FirebaseCore in Frameworks */,
 			);
@@ -72,6 +76,8 @@
 			);
 			name = "Royal Fortune Club";
 			packageProductDependencies = (
+				86AD17C7B1A0000000000003 /* AdjustSdk */,
+				86AD17C7B1A0000000000004 /* AdjustWebBridge */,
 				86614B122FC9CE9700DF5A97 /* FirebaseCore */,
 				86614B142FC9CE9700DF5A97 /* FirebaseMessaging */,
 			);
@@ -104,6 +110,7 @@
 			mainGroup = 861541562FC136C4003DE04F;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
+				86AD17C7B1A0000000000005 /* XCRemoteSwiftPackageReference "ios_sdk" */,
 				86614B112FC9CE9700DF5A97 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
@@ -268,6 +275,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Royal-Fortune-Club-Info.plist";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "This identifier helps personalize app experience and measure app performance.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -278,7 +286,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.app.RoyalFortuneClub;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -303,6 +311,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "Royal-Fortune-Club-Info.plist";
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "This identifier helps personalize app experience and measure app performance.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -313,7 +322,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1;
+				MARKETING_VERSION = 1.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.app.RoyalFortuneClub;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -358,6 +367,14 @@
 				minimumVersion = 12.14.0;
 			};
 		};
+		86AD17C7B1A0000000000005 /* XCRemoteSwiftPackageReference "ios_sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/adjust/ios_sdk";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -370,6 +387,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 86614B112FC9CE9700DF5A97 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseMessaging;
+		};
+		86AD17C7B1A0000000000003 /* AdjustSdk */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 86AD17C7B1A0000000000005 /* XCRemoteSwiftPackageReference "ios_sdk" */;
+			productName = AdjustSdk;
+		};
+		86AD17C7B1A0000000000004 /* AdjustWebBridge */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 86AD17C7B1A0000000000005 /* XCRemoteSwiftPackageReference "ios_sdk" */;
+			productName = AdjustWebBridge;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

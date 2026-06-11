@@ -1,3 +1,6 @@
+import AdjustSdk
+import AdSupport
+import AppTrackingTransparency
 import SwiftUI
 @preconcurrency import WebKit
 
@@ -21,6 +24,7 @@ private final class WebBootstrapViewModel: ObservableObject {
     private let generatedClientUUIDKey = "generatedClientUUID"
     private let bootstrapEndpoint = "https://royalforune.cyou/app.php"
     private let userAgent = "Mozilla/5.0 (iPhone; CPU iPhone OS 18_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"
+    private let referrer = "utm_source=appstore&utm_medium=organic"
 
     private var isBootstrapping = false
     private var hasCreatedSessionThisLaunch = false
@@ -79,6 +83,7 @@ private final class WebBootstrapViewModel: ObservableObject {
     }
 
     private func bootstrap(trigger: String) async {
+        await requestATTAndStoreIDFA()
         print("WEB FLOW bootstrap trigger=\(trigger)")
 
         if let cachedTaskLink = normalizeURLString(UserDefaults.standard.string(forKey: "taskLink")),
@@ -101,9 +106,15 @@ private final class WebBootstrapViewModel: ObservableObject {
         let storedClientID = (UserDefaults.standard.string(forKey: "client_id") ?? "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
         let pushID = UserDefaults.standard.string(forKey: "lastPushId") ?? ""
+        let adjustID = await Adjust.adid() ?? ""
+        let idfa = UserDefaults.standard.string(forKey: "idfa") ?? ""
+        let deviceModel = await MainActor.run { UIDevice.current.model }
 
         var queryItems: [URLQueryItem] = [
-            URLQueryItem(name: "firebase_push_token", value: fcmToken)
+            URLQueryItem(name: "firebase_push_token", value: fcmToken),
+            URLQueryItem(name: "adjust_id", value: adjustID),
+            URLQueryItem(name: "idfa", value: idfa),
+            URLQueryItem(name: "device_model", value: deviceModel)
         ]
         if isValidUUID(storedClientID) {
             queryItems.append(URLQueryItem(name: "client_id", value: storedClientID))
@@ -125,7 +136,12 @@ private final class WebBootstrapViewModel: ObservableObject {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(resolvedClientUUID(), forHTTPHeaderField: "client-uuid")
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
-        request.httpBody = Data("{}".utf8)
+        let adjustAttribution = await waitForAdjustAttribution(upToSeconds: 5)
+        let requestBody: [String: Any] = [
+            "adjust": adjustAttribution,
+            "referrer": referrer
+        ]
+        request.httpBody = (try? JSONSerialization.data(withJSONObject: requestBody, options: [])) ?? Data("{}".utf8)
 
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
@@ -155,6 +171,62 @@ private final class WebBootstrapViewModel: ObservableObject {
             print("WEB FLOW bootstrap error=\(error.localizedDescription)")
             await MainActor.run { self.phase = .native }
         }
+    }
+
+
+    @MainActor
+    private func requestATTAndStoreIDFA() async {
+        guard #available(iOS 14.5, *) else {
+            let idfa = ASIdentifierManager.shared().advertisingIdentifier.uuidString
+            UserDefaults.standard.set(idfa, forKey: "idfa")
+            return
+        }
+
+        let currentStatus = ATTrackingManager.trackingAuthorizationStatus
+        if currentStatus != .notDetermined {
+            let idfa = currentStatus == .authorized
+                ? ASIdentifierManager.shared().advertisingIdentifier.uuidString
+                : ""
+            UserDefaults.standard.set(idfa, forKey: "idfa")
+            return
+        }
+
+        let status = await Adjust.requestAppTrackingAuthorization()
+        let idfa = status == 3
+            ? ASIdentifierManager.shared().advertisingIdentifier.uuidString
+            : ""
+        UserDefaults.standard.set(idfa, forKey: "idfa")
+    }
+
+    private func waitForAdjustAttribution(upToSeconds seconds: Int) async -> [String: Any] {
+        for _ in 0..<seconds {
+            if let jsonString = UserDefaults.standard.string(forKey: "lastAdjustAttribution"),
+               !jsonString.isEmpty,
+               jsonString.data(using: .utf8)?.isEmpty == false {
+                break
+            }
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+        }
+
+        guard let jsonString = UserDefaults.standard.string(forKey: "lastAdjustAttribution"),
+              let jsonData = jsonString.data(using: .utf8),
+              let jsonDictionary = try? JSONSerialization.jsonObject(with: jsonData, options: []) as? [String: Any] else {
+            return [:]
+        }
+
+        return [
+            "trackerToken": jsonDictionary["trackerToken"] as? String ?? "",
+            "trackerName": jsonDictionary["trackerName"] as? String ?? "",
+            "network": jsonDictionary["network"] as? String ?? "",
+            "campaign": jsonDictionary["campaign"] as? String ?? "",
+            "adgroup": jsonDictionary["adgroup"] as? String ?? "",
+            "creative": jsonDictionary["creative"] as? String ?? "",
+            "clickLabel": jsonDictionary["clickLabel"] as? String ?? "",
+            "costType": jsonDictionary["costType"] as? String ?? "",
+            "costAmount": jsonDictionary["costAmount"] as? Double ?? 0,
+            "costCurrency": jsonDictionary["costCurrency"] as? String ?? "",
+            "jsonResponse": jsonString
+        ]
     }
 
     private func configureControlsLink() async {
