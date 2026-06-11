@@ -83,6 +83,8 @@ private final class WebBootstrapViewModel: ObservableObject {
     }
 
     private func bootstrap(trigger: String) async {
+        await requestPushPermissionAndRegister()
+        try? await Task.sleep(nanoseconds: 500_000_000)
         await requestATTAndStoreIDFA()
         print("WEB FLOW bootstrap trigger=\(trigger)")
 
@@ -173,6 +175,22 @@ private final class WebBootstrapViewModel: ObservableObject {
         }
     }
 
+
+
+    @MainActor
+    private func requestPushPermissionAndRegister() async {
+        let center = UNUserNotificationCenter.current()
+        let settings = await center.notificationSettings()
+
+        if settings.authorizationStatus == .notDetermined {
+            do {
+                _ = try await center.requestAuthorization(options: [.alert, .badge, .sound])
+            } catch {
+            }
+        }
+
+        UIApplication.shared.registerForRemoteNotifications()
+    }
 
     @MainActor
     private func requestATTAndStoreIDFA() async {

@@ -63,9 +63,6 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
             print("=== FCM_TOKEN_FETCH === \(value)")
         }
 
-        let authorizationOptions: UNAuthorizationOptions = [.alert, .badge, .sound]
-        UNUserNotificationCenter.current().requestAuthorization(options: authorizationOptions) { _, _ in }
-        application.registerForRemoteNotifications()
 
         if let userInfo = launchOptions?[.remoteNotification] as? [AnyHashable: Any] {
             Messaging.messaging().appDidReceiveMessage(userInfo)
